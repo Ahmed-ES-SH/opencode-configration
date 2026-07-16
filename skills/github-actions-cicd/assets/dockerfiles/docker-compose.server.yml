@@ -1,0 +1,28 @@
+# Lives ON THE SERVER (not in the repo's CI), at e.g. /var/www/app/docker-compose.yml
+# This is what `docker compose pull && docker compose up -d` in the VPS
+# deploy workflow acts on — it pulls the already-built image from GHCR
+# rather than building on the (often memory-constrained) VPS itself.
+
+services:
+  app:
+    image: ghcr.io/OWNER/REPO:latest # match the tag your CD workflow pushes
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env # lives on the server only, never committed
+    # If the app needs a database and it isn't already managed elsewhere
+    # (e.g. a managed Postgres), add it here:
+    # depends_on:
+    #   - db
+
+  # db:
+  #   image: postgres:16-alpine
+  #   restart: unless-stopped
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   env_file:
+  #     - .env
+
+# volumes:
+#   pgdata:

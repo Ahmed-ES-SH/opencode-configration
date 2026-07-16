@@ -1,0 +1,109 @@
+# Copy to .github/workflows/cd-staging.yml AND .github/workflows/cd-production.yml,
+# then delete the half you don't need in each file (marked below).
+# Requires secrets: SSH_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT (optional)
+# Assumes a docker-compose.yml already lives on the server referencing
+# ghcr.io/<owner>/<repo>:latest (or :develop for staging — build two tags).
+
+# ==================== cd-staging.yml ====================
+name: Build, push & deploy (staging)
+
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /var/www/app-staging
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
+
+# ==================== cd-production.yml ====================
+# name: Build, push & deploy (production)
+#
+# on:
+#   push:
+#     branches: [main]
+#
+# permissions:
+#   contents: read
+#   packages: write
+#
+# env:
+#   REGISTRY: ghcr.io
+#   IMAGE_NAME: ${{ github.repository }}
+#
+# jobs:
+#   build-and-push:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v6
+#       - uses: docker/setup-buildx-action@v3
+#       - uses: docker/login-action@v3
+#         with:
+#           registry: ${{ env.REGISTRY }}
+#           username: ${{ github.actor }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#       - uses: docker/build-push-action@v6
+#         with:
+#           context: .
+#           push: true
+#           tags: |
+#             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+#             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+#           cache-from: type=gha
+#           cache-to: type=gha,mode=max
+#
+#   deploy:
+#     needs: build-and-push
+#     runs-on: ubuntu-latest
+#     environment: production
+#     steps:
+#       - uses: appleboy/ssh-action@v1
+#         with:
+#           host: ${{ secrets.SSH_HOST }}
+#           username: ${{ secrets.SSH_USER }}
+#           key: ${{ secrets.SSH_PRIVATE_KEY }}
+#           port: ${{ secrets.SSH_PORT }}
+#           script: |
+#             cd /var/www/app
+#             docker compose pull
+#             docker compose up -d
+#             docker image prune -f

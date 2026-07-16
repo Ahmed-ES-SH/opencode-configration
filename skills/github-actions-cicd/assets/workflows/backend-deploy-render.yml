@@ -1,0 +1,36 @@
+# Copy to .github/workflows/cd-staging.yml AND .github/workflows/cd-production.yml
+# then delete the half you don't need in each file (marked below).
+# Works for NestJS or Laravel backends deployed as a Render Web Service.
+# Requires a secret per environment: RENDER_DEPLOY_HOOK_URL
+# (staging and production are two different Render services, each with its
+# own deploy hook URL — store each under its matching GitHub Environment).
+
+# ==================== cd-staging.yml ====================
+name: Deploy to Render (staging)
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Trigger Render deploy
+        run: curl -fsS "${{ secrets.RENDER_DEPLOY_HOOK_URL }}&ref=${{ github.sha }}"
+
+# ==================== cd-production.yml ====================
+# name: Deploy to Render (production)
+#
+# on:
+#   push:
+#     branches: [main]
+#
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     environment: production
+#     steps:
+#       - name: Trigger Render deploy
+#         run: curl -fsS "${{ secrets.RENDER_DEPLOY_HOOK_URL }}&ref=${{ github.sha }}"

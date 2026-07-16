@@ -1,0 +1,62 @@
+# Copy to .github/workflows/cd-staging.yml AND .github/workflows/cd-production.yml
+# then delete the half you don't need in each file (marked below).
+# Requires secrets: SSH_HOST, SSH_USER, SSH_PRIVATE_KEY, SSH_PORT (optional)
+# Native (no Docker) deploy — pulls source directly on the server.
+
+# ==================== cd-staging.yml ====================
+name: Deploy to VPS (staging)
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /var/www/app-staging
+            git pull origin develop
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan queue:restart
+
+# ==================== cd-production.yml ====================
+# name: Deploy to VPS (production)
+#
+# on:
+#   push:
+#     branches: [main]
+#
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     environment: production
+#     steps:
+#       - name: Deploy over SSH
+#         uses: appleboy/ssh-action@v1
+#         with:
+#           host: ${{ secrets.SSH_HOST }}
+#           username: ${{ secrets.SSH_USER }}
+#           key: ${{ secrets.SSH_PRIVATE_KEY }}
+#           port: ${{ secrets.SSH_PORT }}
+#           script: |
+#             cd /var/www/app
+#             git pull origin main
+#             composer install --no-dev --optimize-autoloader --no-interaction
+#             php artisan migrate --force
+#             php artisan config:cache
+#             php artisan route:cache
+#             php artisan view:cache
+#             php artisan queue:restart
