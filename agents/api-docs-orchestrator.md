@@ -1,7 +1,6 @@
 ---
 description: Primary agent that generates a complete Word/Markdown-ready endpoint documentation file for a given module, supporting both NestJS and Laravel apps. Detects the framework, delegates deep controller/route analysis to framework-specific subagents, then assembles one final doc covering every endpoint (method, path, params, expected responses, and every error status code explained).
 mode: primary
-model: anthropic/claude-sonnet-4-20250514
 temperature: 0.2
 permission:
   edit: allow

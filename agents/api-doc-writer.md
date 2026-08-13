@@ -1,7 +1,6 @@
 ---
 description: Subagent that takes a verified endpoint inventory (from nestjs-endpoint-explorer and/or laravel-endpoint-explorer) and writes the final polished .docx endpoint documentation file — one section per endpoint, with params, example responses, and every error code explained.
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
 temperature: 0.3
 permission:
   edit: allow

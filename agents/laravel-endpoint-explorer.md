@@ -1,7 +1,6 @@
 ---
 description: Read-only subagent that scans a Laravel module's routes, controllers, FormRequests, and API resources to extract a complete, verified contract for every endpoint — params, response shapes, and every reachable error status code.
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
 temperature: 0.1
 steps: 30
 permission:
